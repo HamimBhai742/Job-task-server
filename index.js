@@ -92,7 +92,7 @@ try {
         res.send(result)
     })
 
-    app.get('/user', verifyToken, verifyUser, async (req, res) => {
+    app.get('/user', verifyToken, async (req, res) => {
         const email = req.query.email
         console.log(email, 'lllllllllllscdddddddddd');
         const query = { email: email }
@@ -137,6 +137,37 @@ try {
             $set: {
                 status: status,
                 newUserBonus: 'complete'
+            },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+    app.patch('/cash-in/:email', verifyToken, verifyAgent, async (req, res) => {
+        const email = req.params.email
+        console.log(email, 'iiiiiiiik');
+        const amount = req.query.amount
+        console.log(amount, 'kkkkiiiiii');
+        const options = { upsert: true };
+        const filter = { email: email }
+        const updateDoc = {
+            $set: {
+                amount: amount,
+            },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+
+    app.patch('/cash-out/:email', verifyToken, verifyAgent, async (req, res) => {
+        const email = req.params.email
+        console.log(email, 'iiiiiiiik');
+        const amount = req.query.amount
+        console.log(amount, 'kkkkiiiiii');
+        const options = { upsert: true };
+        const filter = { email: email }
+        const updateDoc = {
+            $set: {
+                amount: amount,
             },
         };
         const result = await userCollection.updateOne(filter, updateDoc, options);
