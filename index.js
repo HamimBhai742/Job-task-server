@@ -3,9 +3,10 @@ const app = express()
 const cors = require('cors')
 const User = require('./Module/User');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { MongoClient, ServerApiVersion } = require('mongodb')
 const authRoutes = require('./Router/Auth');
-const { isObjectIdOrHexString } = require('mongoose');
+const { isObjectIdOrHexString, isValidObjectId, default: mongoose } = require('mongoose');
 const port = process.env.PORT || 5000
 require('./connectDB/db')
 app.use(cors())
@@ -126,6 +127,23 @@ try {
         res.send(result)
     })
 
+    app.patch('/cash-outs/:id', verifyToken, verifyAgent, async (req, res) => {
+        const ids = req.params.id
+        const transactionId = crypto.randomBytes(12).toString('hex');
+        console.log(transactionId, 'trdsf');
+        const options = { upsert: true };
+        const ObjectId = mongoose.Types.ObjectId
+        const filter = { _id: new ObjectId(ids) }
+        const updateDoc = {
+            $set: {
+                status: 'complete',
+                transactionId: transactionId
+            },
+        };
+        const result = await cashCollection.updateOne(filter, updateDoc, options);
+        console.log(result);
+        res.send(result)
+    })
     app.patch('/update-user/:email', verifyToken, verifyAdmin, async (req, res) => {
         const email = req.params.email
         console.log(email, 'iiiiiiiik');
@@ -163,14 +181,14 @@ try {
         console.log(email, 'iiiiiiiik');
         const amount = req.query.amount
         console.log(amount, 'kkkkiiiiii');
-        const options = { upsert: true };
+        // const options = { upsert: true };
         const filter = { email: email }
         const updateDoc = {
             $set: {
                 amount: amount,
             },
         };
-        const result = await userCollection.updateOne(filter, updateDoc, options);
+        const result = await userCollection.updateOne(filter, updateDoc);
         res.send(result)
     })
 
