@@ -61,12 +61,12 @@ router.post('/login', async (req, res) => {
         }
         console.log(user.pin, 'pin');
         if (user.status === 'pending') {
-            return res.status(400).json({ message: "Admin can't aproved" });
+            return res.status(400).json({ message: "Admin has not active your account" });
         }
         const isMatch = await bcrypt.compare(pin, user.pin)
         console.log(isMatch);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Incorrected Password' });
+            return res.status(400).json({ message: 'Incorrected PIN' });
         }
 
         jwt.sign(

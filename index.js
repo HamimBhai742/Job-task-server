@@ -5,6 +5,7 @@ const User = require('./Module/User');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion } = require('mongodb')
 const authRoutes = require('./Router/Auth');
+const { isObjectIdOrHexString } = require('mongoose');
 const port = process.env.PORT || 5000
 require('./connectDB/db')
 app.use(cors())
@@ -55,6 +56,20 @@ const verifyAgent = async (req, res, next) => {
     }
     next()
 }
+
+const verifyAdmin = async (req, res, next) => {
+    console.log(req.decoded);
+    const email = req.decoded?.email
+    console.log(email);
+    // const query = { email: email }
+    const user = await User.findOne({ email });
+    const isAdmin = user?.role === 'admin'
+    console.log(isAdmin);
+    if (!isAdmin) {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    next()
+}
 const uri = process.env.MONGO_URL
 const client = new MongoClient(uri, {
     serverApi: {
@@ -66,21 +81,101 @@ const client = new MongoClient(uri, {
 try {
     const database = client.db("nagadDB");
     const nagadCollection = database.collection("nagad");
+    const cashCollection = database.collection("cash-in");
     const userCollection = database.collection("users");
-    app.post('/post', async (req, res) => {
-        const doc = req.body
-        console.log(doc);
-        const result = await nagadCollection.insertOne(doc);
+
+
+
+    app.post('/cash-in', async (req, res) => {
+        const data = req.body
+        const result = await cashCollection.insertOne(data);
         res.send(result)
     })
 
-    app.get('/user', verifyToken, async (req, res) => {
+    app.get('/user', verifyToken, verifyUser, async (req, res) => {
         const email = req.query.email
-        console.log(email,'lllllllllllscdddddddddd');
+        console.log(email, 'lllllllllllscdddddddddd');
         const query = { email: email }
         const result = await userCollection.findOne(query)
         res.send(result)
     })
+
+    app.get('/all-user', verifyToken, verifyAgent, async (req, res) => {
+        const result = await userCollection.find().toArray()
+        res.send(result)
+    })
+
+    app.get('/agent', verifyToken, verifyAgent, async (req, res) => {
+        const email = req.query.email
+        console.log(email, 'lllllllllllscdddddddddd');
+        const query = { email: email }
+        const result = await userCollection.findOne(query)
+        res.send(result)
+    })
+    app.get('/transactions', verifyToken, verifyUser, async (req, res) => {
+        const result = await cashCollection.find().toArray()
+        res.send(result)
+    })
+    app.get('/cash-in-request', async (req, res) => {
+        const result = await cashCollection.find().toArray()
+        res.send(result)
+    })
+
+    app.get('/users-management', verifyToken, verifyAdmin, async (req, res) => {
+        const result = await userCollection.find().toArray()
+        res.send(result)
+    })
+
+    app.patch('/update-user/:email', verifyToken, verifyAdmin, async (req, res) => {
+        const email = req.params.email
+        console.log(email, 'iiiiiiiik');
+        const status = req.query.status
+        console.log(status, 'kkkkiiiiii');
+        const options = { upsert: true };
+        const filter = { email: email }
+        const updateDoc = {
+            $set: {
+                status: status,
+                newUserBonus: 'complete'
+            },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+
+    app.patch('/new-user-bonus/:email', verifyToken, verifyAdmin, async (req, res) => {
+        const email = req.params.email
+        console.log(email, 'iiiiiiiik');
+        const options = { upsert: true };
+        const filter = { email: email }
+        const updateDoc = {
+            $set: {
+                amount: 40
+            },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+
+    app.patch('/new-agent-bonus/:email', verifyToken, verifyAdmin, async (req, res) => {
+        const email = req.params.email
+        console.log(email, 'iiiiiiiik');
+        const options = { upsert: true };
+        const filter = { email: email }
+        const updateDoc = {
+            $set: {
+                amount: 10000
+            },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+
+    // app.post('/new-user-bonus', async (req, res) => {
+    //     const bonus = req.body
+    //     const result = await nagadCollection.insertOne(bonus);
+    //     res.send(result)
+    // })
 }
 catch (err) {
     console.log(err);
