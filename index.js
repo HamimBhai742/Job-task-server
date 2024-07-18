@@ -82,14 +82,28 @@ const client = new MongoClient(uri, {
 try {
     const database = client.db("nagadDB");
     const nagadCollection = database.collection("nagad");
-    const cashCollection = database.collection("cash-in");
+    const cashInCollection = database.collection("cash-in");
+    const cashOutCollection = database.collection("cash-Out");
     const userCollection = database.collection("users");
-
-
-
-    app.post('/cash-in', async (req, res) => {
+    app.post('/cash-in-out', verifyToken, verifyUser, async (req, res) => {
         const data = req.body
-        const result = await cashCollection.insertOne(data);
+        const result = await cashInCollection.insertOne(data);
+        res.send(result)
+    })
+
+    app.post('/cash-out', verifyToken, verifyAgent, async (req, res) => {
+        const data = req.body
+        const result = await cashInCollection.insertOne(data);
+        res.send(result)
+    })
+
+    app.get('/cash-out-transaction/:email', verifyToken, async (req, res) => {
+        const status = req.query.status
+        const email = req.params.email
+        const query = { email: email, status: 'complete' }
+        console.log(status, query, 'jhjg');
+        const result = await cashInCollection.find(query).toArray()
+        console.log(result);
         res.send(result)
     })
 
@@ -113,12 +127,21 @@ try {
         const result = await userCollection.findOne(query)
         res.send(result)
     })
-    app.get('/transactions', verifyToken, verifyUser, async (req, res) => {
-        const result = await cashCollection.find().toArray()
+    app.get('/transactions/:email', verifyToken, verifyUser, async (req, res) => {
+        const email = req.params.email
+        const status = req.query.status
+        const query = { status: 'complete', email: email }
+        console.log(status, query, 'jhjg');
+        const result = await cashInCollection.find(query).toArray()
+        console.log(result);
         res.send(result)
     })
-    app.get('/cash-in-request', async (req, res) => {
-        const result = await cashCollection.find().toArray()
+    app.get('/cash-in-out-request', verifyToken, verifyAgent, async (req, res) => {
+        const status = req.query.status
+        console.log(status);
+        const query = { status: status }
+        console.log(query);
+        const result = await cashInCollection.find(query).toArray()
         res.send(result)
     })
 
@@ -129,6 +152,8 @@ try {
 
     app.patch('/cash-outs/:id', verifyToken, verifyAgent, async (req, res) => {
         const ids = req.params.id
+        const type = req.query.type
+        console.log(type);
         const transactionId = crypto.randomBytes(12).toString('hex');
         console.log(transactionId, 'trdsf');
         const options = { upsert: true };
@@ -137,10 +162,11 @@ try {
         const updateDoc = {
             $set: {
                 status: 'complete',
-                transactionId: transactionId
+                transactionId: transactionId,
+                type: type
             },
         };
-        const result = await cashCollection.updateOne(filter, updateDoc, options);
+        const result = await cashInCollection.updateOne(filter, updateDoc, options);
         console.log(result);
         res.send(result)
     })
