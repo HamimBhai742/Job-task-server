@@ -9,7 +9,9 @@ const authRoutes = require('./Router/Auth');
 const { isObjectIdOrHexString, isValidObjectId, default: mongoose } = require('mongoose');
 const port = process.env.PORT || 5000
 require('./connectDB/db')
-app.use(cors())
+app.use(cors({
+    origin: ['http://localhost:5173']
+}))
 app.use(express.json());
 
 app.use('/auth', authRoutes)
@@ -93,7 +95,7 @@ try {
 
     app.post('/cash-out', verifyToken, verifyAgent, async (req, res) => {
         const data = req.body
-        const result = await cashInCollection.insertOne(data);
+        const result = await cashInCollection.insertMany(data);
         res.send(result)
     })
 
@@ -127,6 +129,13 @@ try {
         const result = await userCollection.findOne(query)
         res.send(result)
     })
+
+    app.get('/all-transactions', verifyToken, verifyAdmin, async (req, res) => {
+        const status = req.query.status
+        const query = { status: status }
+        const result = await cashInCollection.find(query).toArray()
+        res.send(result)
+    })
     app.get('/transactions/:email', verifyToken, verifyUser, async (req, res) => {
         const email = req.params.email
         const status = req.query.status
@@ -149,21 +158,30 @@ try {
         const result = await userCollection.find().toArray()
         res.send(result)
     })
+    app.get('/send-user', async (req, res) => {
+        // const email = req.query.email
+        // const query = { email: email }
+        const result = await userCollection.find().toArray()
+        res.send(result)
+    })
 
     app.patch('/cash-outs/:id', verifyToken, verifyAgent, async (req, res) => {
         const ids = req.params.id
         const type = req.query.type
         console.log(type);
-        const transactionId = crypto.randomBytes(12).toString('hex');
-        console.log(transactionId, 'trdsf');
+        const tra = req.query.tra
+        console.log(tra);
+        const time = req.query.time
+        console.log(time);
         const options = { upsert: true };
         const ObjectId = mongoose.Types.ObjectId
         const filter = { _id: new ObjectId(ids) }
         const updateDoc = {
             $set: {
                 status: 'complete',
-                transactionId: transactionId,
-                type: type
+                transactionId: tra,
+                type: type,
+                time: time
             },
         };
         const result = await cashInCollection.updateOne(filter, updateDoc, options);
@@ -243,6 +261,58 @@ try {
             },
         };
         const result = await userCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+
+    app.patch('/send-money/:email', async (req, res) => {
+        const email = req.params.email
+        const amount = req.query.amount
+        console.log(email, 'iiiiiiiik');
+        const options = { upsert: true };
+        const filter = { email: email }
+        console.log(email);
+        const updateDoc = {
+            $set: {
+                amount: amount
+            },
+        };
+        console.log(updateDoc);
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        console.log(result);
+        res.send(result)
+    })
+    app.post('/send-money', async (req, res) => {
+        const sendUser = req.body
+        const result = await cashInCollection.insertOne(sendUser)
+        res.send(result)
+    })
+
+
+    app.patch('/recived-money/:email', async (req, res) => {
+        const email = req.params.email
+        console.log(email);
+        const amount = req.query.amount
+        console.log(email, 'iiiiiiiik');
+        const options = { upsert: true };
+        const filter = { email: email }
+        const updateDoc = {
+            $set: {
+                amount: amount
+            },
+        };
+        console.log(updateDoc);
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        console.log(result);
+        res.send(result)
+    })
+    app.post('/recived-money', async (req, res) => {
+        const recivedUser = req.body
+        const result = await cashInCollection.insertOne(recivedUser)
+        res.send(result)
+    })
+    app.post('/send-money-fee', async (req, res) => {
+        const recivedUser = req.body
+        const result = await cashInCollection.insertOne(recivedUser)
         res.send(result)
     })
 
