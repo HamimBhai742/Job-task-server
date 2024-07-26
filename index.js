@@ -10,7 +10,7 @@ const { isObjectIdOrHexString, isValidObjectId, default: mongoose } = require('m
 const port = process.env.PORT || 5000
 require('./connectDB/db')
 app.use(cors({
-    origin: ['http://localhost:5173']
+    origin: ['http://localhost:5173', 'https://job-task-ruddy.vercel.app']
 }))
 app.use(express.json());
 
@@ -158,7 +158,7 @@ try {
         const result = await userCollection.find().toArray()
         res.send(result)
     })
-    app.get('/send-user', async (req, res) => {
+    app.get('/send-user', verifyToken, verifyUser, async (req, res) => {
         // const email = req.query.email
         // const query = { email: email }
         const result = await userCollection.find().toArray()
@@ -250,6 +250,12 @@ try {
         res.send(result)
     })
 
+    app.post('/new-user-bonus', verifyToken, verifyAdmin, async (req, res) => {
+        const sendUser = req.body
+        const result = await cashInCollection.insertOne(sendUser)
+        res.send(result)
+    })
+
     app.patch('/new-agent-bonus/:email', verifyToken, verifyAdmin, async (req, res) => {
         const email = req.params.email
         console.log(email, 'iiiiiiiik');
@@ -264,7 +270,7 @@ try {
         res.send(result)
     })
 
-    app.patch('/send-money/:email', async (req, res) => {
+    app.patch('/send-money/:email', verifyToken, verifyUser, async (req, res) => {
         const email = req.params.email
         const amount = req.query.amount
         console.log(email, 'iiiiiiiik');
@@ -281,14 +287,14 @@ try {
         console.log(result);
         res.send(result)
     })
-    app.post('/send-money', async (req, res) => {
+    app.post('/send-money', verifyToken, verifyUser, async (req, res) => {
         const sendUser = req.body
         const result = await cashInCollection.insertOne(sendUser)
         res.send(result)
     })
 
 
-    app.patch('/recived-money/:email', async (req, res) => {
+    app.patch('/received-money/:email', verifyToken, verifyUser, async (req, res) => {
         const email = req.params.email
         console.log(email);
         const amount = req.query.amount
@@ -305,12 +311,12 @@ try {
         console.log(result);
         res.send(result)
     })
-    app.post('/recived-money', async (req, res) => {
+    app.post('/recived-money', verifyToken, verifyUser, async (req, res) => {
         const recivedUser = req.body
         const result = await cashInCollection.insertOne(recivedUser)
         res.send(result)
     })
-    app.post('/send-money-fee', async (req, res) => {
+    app.post('/send-money-fee', verifyToken, verifyUser, async (req, res) => {
         const recivedUser = req.body
         const result = await cashInCollection.insertOne(recivedUser)
         res.send(result)
