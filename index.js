@@ -10,7 +10,13 @@ const { isObjectIdOrHexString, isValidObjectId, default: mongoose } = require('m
 const port = process.env.PORT || 5000
 require('./connectDB/db')
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://job-task-ruddy.vercel.app']
+    origin: [
+        'http://localhost:5173',
+        'https://job-task-ruddy.vercel.app',
+        'https://jobs-task-01-server.vercel.app',
+        'https://vercel.com/hamims-projects-5221904d/job-task/xsFZPU31BGQWTqkioJ4iKHC3HAZx',
+        'https://vercel.com/hamims-projects-5221904d/jobs-task-01-server/66KwoxCDwERuWakFz4nqz2PaZfEr'
+    ]
 }))
 app.use(express.json());
 
@@ -93,6 +99,12 @@ try {
         res.send(result)
     })
 
+    // app.post('/cash-out-out', verifyToken, verifyAgent, async (req, res) => {
+    //     const data = req.body
+    //     const result = await cashInCollection.insertOne(data);
+    //     res.send(result)
+    // })
+
     app.post('/cash-out', verifyToken, verifyAgent, async (req, res) => {
         const data = req.body
         const result = await cashInCollection.insertMany(data);
@@ -147,8 +159,9 @@ try {
     })
     app.get('/cash-in-out-request', verifyToken, verifyAgent, async (req, res) => {
         const status = req.query.status
+        const email = req.query.email
         console.log(status);
-        const query = { status: status }
+        const query = { status: status, agentEmail: email }
         console.log(query);
         const result = await cashInCollection.find(query).toArray()
         res.send(result)
