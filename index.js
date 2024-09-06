@@ -9,15 +9,17 @@ const authRoutes = require('./Router/Auth');
 const { isObjectIdOrHexString, isValidObjectId, default: mongoose } = require('mongoose');
 const port = process.env.PORT || 5000
 require('./connectDB/db')
-app.use(cors({
+app.use(
+  cors({
     origin: [
-        'http://localhost:5173',
-        'https://job-task-ruddy.vercel.app',
-        'https://jobs-task-01-server.vercel.app',
-        'https://vercel.com/hamims-projects-5221904d/job-task/xsFZPU31BGQWTqkioJ4iKHC3HAZx',
-        'https://vercel.com/hamims-projects-5221904d/jobs-task-01-server/66KwoxCDwERuWakFz4nqz2PaZfEr'
-    ]
-}))
+      "http://localhost:5173",
+      "https://job-task-ruddy.vercel.app",
+      "https://jobs-task-01-server.vercel.app",
+      "https://nagad-mfs.netlify.app",
+      "https://vercel.com/hamims-projects-5221904d/jobs-task-01-server/66KwoxCDwERuWakFz4nqz2PaZfEr",
+    ],
+  })
+);
 app.use(express.json());
 
 app.use('/auth', authRoutes)
